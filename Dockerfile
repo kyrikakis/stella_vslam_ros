@@ -147,15 +147,17 @@ RUN set -x && \
 WORKDIR /ros2_ws
 COPY . /ros2_ws/src/stella_vslam_ros
 
-RUN set -x && \
-  : "build ROS2 packages" && \
-  bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; \
-  colcon build --parallel-workers ${NUM_THREADS} --cmake-args \
-    -DUSE_STACK_TRACE_LOGGER=ON"
+# RUN set -x && \
+#   : "build ROS2 packages" && \
+#   bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; \
+#   colcon build --parallel-workers ${NUM_THREADS} --cmake-args \
+#     -DUSE_STACK_TRACE_LOGGER=ON"
 
 RUN set -x && \
-  sh -c "echo '#'\!'/bin/bash\nset -e\nsource /opt/ros/${ROS_DISTRO}/setup.bash\nsource /ros2_ws/install/setup.bash\nexec \"\$@\"' > /ros_entrypoint.sh" && \
+  sh -c "echo '#'\!'/bin/bash\nset -e\nsource /opt/ros/${ROS_DISTRO}/setup.bash\nexec \"\$@\"' > /ros_entrypoint.sh" && \
   chmod u+x /ros_entrypoint.sh
 
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc 
+ENV TERM xterm
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["bash"]
