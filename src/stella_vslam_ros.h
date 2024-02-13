@@ -4,6 +4,7 @@
 #include <stella_vslam/system.h>
 #include <stella_vslam/config.h>
 #include <stella_vslam/util/stereo_rectifier.h>
+#include <stella_vslam/data/landmark.h>
 
 #include <rclcpp/rclcpp.hpp>
 #include <image_transport/image_transport.hpp>
@@ -15,6 +16,9 @@
 #include <cv_bridge/cv_bridge.h>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <pcl/point_cloud.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -31,6 +35,7 @@ public:
            rclcpp::Node* node,
            const std::string& mask_img_path);
     void publish_pose(const Eigen::Matrix4d& cam_pose_wc, const rclcpp::Time& stamp);
+    void publish_pointcloud(const rclcpp::Time& stamp);
     void publish_keyframes(const rclcpp::Time& stamp);
     void setParams();
     std::shared_ptr<stella_vslam::system> slam_;
@@ -40,6 +45,7 @@ public:
     cv::Mat mask_;
     std::vector<double> track_times_;
     std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> pose_pub_;
+    std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> pc_pub_;
     std::shared_ptr<rclcpp::Publisher<geometry_msgs::msg::PoseArray>> keyframes_pub_;
     std::shared_ptr<rclcpp::Publisher<geometry_msgs::msg::PoseArray>> keyframes_2d_pub_;
     std::shared_ptr<rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>>

@@ -30,6 +30,7 @@ system::system(const std::shared_ptr<stella_vslam::system>& slam,
     : slam_(slam), node_(node), custom_qos_(rmw_qos_profile_sensor_data),
       mask_(mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE)),
       pose_pub_(node_->create_publisher<nav_msgs::msg::Odometry>("~/camera_pose", 1)),
+      pc_pub_(node_->create_publisher<sensor_msgs::msg::PointCloud2>("~/pointcloud", 1)),
       keyframes_pub_(node_->create_publisher<geometry_msgs::msg::PoseArray>("~/keyframes", 1)),
       keyframes_2d_pub_(node_->create_publisher<geometry_msgs::msg::PoseArray>("~/keyframes_2d", 1)),
       map_to_odom_broadcaster_(std::make_shared<tf2_ros::TransformBroadcaster>(node_)),
@@ -92,6 +93,25 @@ void system::publish_pose(const Eigen::Matrix4d& cam_pose_wc, const rclcpp::Time
             RCLCPP_ERROR_STREAM_THROTTLE(node_->get_logger(), *node_->get_clock(), 1000, "Transform failed: " << ex.what());
         }
     }
+}
+
+void system::publish_pointcloud(const rclcpp::Time& stamp) {
+    std::vector<std::shared_ptr<stella_vslam::data::landmark>> landmarks;
+    std::set<std::shared_ptr<stella_vslam::data::landmark>> local_landmarks;
+    slam_->get_map_publisher()->get_landmarks(landmarks, local_landmarks);
+    pcl::PointCloud<pcl::PointXYZ> points;
+    for (const auto lm : landmarks) {
+        if (!lm || lm->will_be_erased()) {
+            continue;
+        }
+        const Eigen::Vector3d pos_w = rot_ros_to_cv_map_frame_ * lm->get_pos_in_world();
+        points.push_back(pcl::PointXYZ(pos_w.x(), pos_w.y(), pos_w.z()));
+    }
+    sensor_msgs::msg::PointCloud2 pcout;
+    pcl::toROSMsg(points, pcout);
+    pcout.header.frame_id = map_frame_;
+    pcout.header.stamp = stamp;
+    pc_pub_->publish(pcout);
 }
 
 void system::publish_keyframes(const rclcpp::Time& stamp) {

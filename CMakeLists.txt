@@ -130,7 +130,15 @@ find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(PCL 1.12 REQUIRED)
+find_package(pcl_ros REQUIRED)
+find_package(pcl_msgs REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
+
+include_directories(${PCL_INCLUDE_DIRS})
+include_directories(/opt/ros/humble/include/pcl_msgs)
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 # thread library
 find_package(Threads REQUIRED)
